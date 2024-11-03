@@ -1,20 +1,27 @@
 export {
+  defaultClient as client,
+  getClient,
+  resetClient,
+} from './appwrite/init';
+
+export {
   account,
   databases,
   storage,
   functions,
   avatars,
-  DATABASE_ID,
-  COLLECTIONS,
-  BUCKETS,
   initializeServices,
-  isServicesInitialized,
   isInitialized,
+  isServicesInitialized,
   resetServices,
 } from './appwrite/services';
 
-export { client } from './appwrite/init';
-export * from './appwrite/config';
+export {
+  DATABASE_ID,
+  COLLECTIONS,
+  BUCKETS,
+} from './appwrite/constants';
+
 export {
   uploadFile,
   getFilePreview,
@@ -22,3 +29,6 @@ export {
   getImageUrl,
   getStorage,
 } from './appwrite/utils';
+
+// Re-export all constants
+export * from './appwrite/constants';

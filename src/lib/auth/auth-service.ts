@@ -1,5 +1,5 @@
 import { ID, AppwriteException } from 'appwrite';
-import { account } from '../appwrite/services';
+import { appwrite } from '../appwrite/services';
 import type { AuthError, User } from './types';
 import { DEFAULT_PREFERENCES } from './constants';
 
@@ -9,7 +9,6 @@ export class AuthService {
     maxRetries = 3
   ): Promise<T> {
     let lastError: any;
-    
     for (let i = 0; i < maxRetries; i++) {
       try {
         return await operation();
@@ -21,13 +20,12 @@ export class AuthService {
         await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
       }
     }
-    
     throw lastError;
   }
 
   private static handleError(error: any): AuthError {
     console.error('Auth error:', error);
-
+    
     if (!navigator.onLine) {
       return {
         name: 'NetworkError',
@@ -96,12 +94,12 @@ export class AuthService {
 
       // Create email session with retry
       await this.retryOperation(() => 
-        account.createEmailSession(email, password)
+        appwrite.createEmailSession(email, password)
       );
 
       // Get user data with retry
       const user = await this.retryOperation(() => 
-        account.get()
+        appwrite.getAccount()
       );
 
       if (!user) {
@@ -112,7 +110,7 @@ export class AuthService {
       let preferences = DEFAULT_PREFERENCES;
       try {
         const prefs = await this.retryOperation(() => 
-          account.getPrefs()
+          appwrite.getAccountPrefs()
         );
         preferences = {
           ...DEFAULT_PREFERENCES,
@@ -141,19 +139,19 @@ export class AuthService {
         throw new Error('All fields are required');
       }
 
-      // Create user account with retry
-      const user = await this.retryOperation(() => 
-        account.create(ID.unique(), email, password, name)
+      // Create account with retry
+      const user = await this.retryOperation(() =>
+        appwrite.createAccount(email, password, name)
       );
-      
+
       // Create session with retry
-      await this.retryOperation(() => 
-        account.createEmailSession(email, password)
+      await this.retryOperation(() =>
+        appwrite.createEmailSession(email, password)
       );
-      
+
       // Set default preferences with retry
-      await this.retryOperation(() => 
-        account.updatePrefs(DEFAULT_PREFERENCES)
+      await this.retryOperation(() =>
+        appwrite.updateAccountPrefs(DEFAULT_PREFERENCES)
       );
 
       return {
@@ -171,8 +169,8 @@ export class AuthService {
         throw new Error('You appear to be offline. Please check your internet connection.');
       }
 
-      await this.retryOperation(() => 
-        account.deleteSession('current')
+      await this.retryOperation(() =>
+        appwrite.deleteCurrentSession()
       );
     } catch (error: any) {
       throw this.handleError(error);
@@ -185,21 +183,9 @@ export class AuthService {
         return null;
       }
 
-      // Try to get the current session with retry
-      try {
-        await this.retryOperation(() => 
-          account.getSession('current')
-        );
-      } catch (error) {
-        if (error instanceof AppwriteException && error.code === 401) {
-          return null;
-        }
-        throw error;
-      }
-
       // Get user data with retry
-      const user = await this.retryOperation(() => 
-        account.get()
+      const user = await this.retryOperation(() =>
+        appwrite.getAccount()
       );
 
       if (!user) {
@@ -209,8 +195,8 @@ export class AuthService {
       // Get user preferences with retry
       let preferences = DEFAULT_PREFERENCES;
       try {
-        const prefs = await this.retryOperation(() => 
-          account.getPrefs()
+        const prefs = await this.retryOperation(() =>
+          appwrite.getAccountPrefs()
         );
         preferences = {
           ...DEFAULT_PREFERENCES,
@@ -224,33 +210,23 @@ export class AuthService {
         ...user,
         preferences,
       };
-    } catch (error) {
-      console.error('Error getting current user:', error);
-      return null;
+    } catch (error: any) {
+      if (error instanceof AppwriteException && error.code === 401) {
+        return null;
+      }
+      throw this.handleError(error);
     }
   }
 
-  static async updatePreferences(preferences: Partial<User['preferences']>): Promise<User['preferences']> {
+  static async updatePreferences(preferences: Partial<User['preferences']>): Promise<void> {
     try {
       if (!navigator.onLine) {
         throw new Error('You appear to be offline. Please check your internet connection.');
       }
 
-      const currentPrefs = await this.retryOperation(() => 
-        account.getPrefs()
+      await this.retryOperation(() =>
+        appwrite.updateAccountPrefs(preferences)
       );
-
-      const updatedPrefs = {
-        ...DEFAULT_PREFERENCES,
-        ...currentPrefs,
-        ...preferences,
-      };
-      
-      await this.retryOperation(() => 
-        account.updatePrefs(updatedPrefs)
-      );
-
-      return updatedPrefs;
     } catch (error: any) {
       throw this.handleError(error);
     }

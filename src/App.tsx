@@ -4,7 +4,7 @@ import { AuthTabs } from './components/auth/auth-tabs';
 import { useAuth } from './lib/auth';
 import { Toaster } from 'sonner';
 import { DashboardLayout } from './components/dashboard/dashboard-layout';
-import { initializeServices, isServicesInitialized, resetServices } from './lib/appwrite/services';
+import { initializeServices, isServicesInitialized } from './lib/appwrite';
 import { Alert, AlertDescription, AlertTitle } from './components/ui/alert';
 import { Button } from './components/ui/button';
 
@@ -20,7 +20,6 @@ export default function App() {
         setIsInitializing(false);
         return;
       }
-
       try {
         setError(null);
         setIsInitializing(true);
@@ -39,7 +38,6 @@ export default function App() {
   }, [checkAuth, retryCount]);
 
   const handleRetry = () => {
-    resetServices();
     setRetryCount(prev => prev + 1);
   };
 

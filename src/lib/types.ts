@@ -12,7 +12,7 @@ export interface User extends AppwriteDocument {
   email: string;
   name: string;
   avatar?: string;
-  preferences?: UserPreferences;
+  preferences: UserPreferences;
 }
 
 export interface UserPreferences {
@@ -36,78 +36,10 @@ export interface UserPreferences {
   };
 }
 
-export interface Catch extends AppwriteDocument {
-  species: string;
-  weight: number;
-  length: number;
-  location: {
-    name: string;
-    coordinates?: {
-      lat: number;
-      lng: number;
-    };
-  };
-  date: string;
-  photos: string[];
-  featurePhotoIndex: number;
-  weather?: {
-    temperature: number;
-    conditions: string;
-  };
-  userId: string;
-  groupId?: string;
-  sharedWithGroups: string[];
-  notes?: string;
-}
-
-export interface Group extends AppwriteDocument {
+export interface AuthError {
   name: string;
-  description: string;
-  avatar?: string;
-  members: string[];
-  admins: string[];
-  challenges?: string[];
+  message: string;
+  code: number;
 }
 
-export interface Challenge extends AppwriteDocument {
-  title: string;
-  description: string;
-  startDate: string;
-  endDate: string;
-  type: 'biggest_catch' | 'species_variety' | 'total_weight';
-  target: {
-    species?: string;
-    metric?: 'weight' | 'length';
-    count?: number;
-  };
-  participants: {
-    userId: string;
-    progress: number;
-  }[];
-  completed: boolean;
-  winner?: string;
-  groupId: string;
-}
-
-export interface Comment extends AppwriteDocument {
-  content: string;
-  userId: string;
-  catchId: string;
-}
-
-export interface CalendarEvent extends AppwriteDocument {
-  title: string;
-  date: string;
-  location: string;
-  description?: string;
-  participants: string[];
-  userId: string;
-}
-
-export interface Invitation extends AppwriteDocument {
-  email: string;
-  groupId: string;
-  status: 'pending' | 'accepted' | 'declined';
-  expiresAt: string;
-  userId?: string;
-}
+// ... rest of your types

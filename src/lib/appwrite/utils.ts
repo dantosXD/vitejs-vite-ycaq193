@@ -1,4 +1,5 @@
-import { storage, BUCKETS } from './services';
+import { storage } from './services';
+import { BUCKETS } from './constants';
 import { ID } from 'appwrite';
 
 export async function uploadFile(bucketId: string, file: File) {

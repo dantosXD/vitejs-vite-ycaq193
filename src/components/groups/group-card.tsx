@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { GroupCatches } from './group-catches';
 import type { Group } from '@/lib/types';
-import { useAuth } from '@/lib/stores/auth-store';
+import { useAuth } from '@/lib/auth/auth-store';
 
 interface GroupCardProps {
   group: Group;

@@ -12,7 +12,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/lib/stores/auth-store';
+import { useAuth } from '@/lib/auth/auth-store';
 import { toast } from 'sonner';
 
 const formSchema = z.object({

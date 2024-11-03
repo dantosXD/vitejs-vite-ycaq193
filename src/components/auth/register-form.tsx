@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/lib/stores/auth-store';
+import { useAuth } from '@/lib/auth/auth-store';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),

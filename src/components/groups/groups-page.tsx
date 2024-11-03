@@ -5,7 +5,7 @@ import { GroupCard } from './group-card';
 import { CreateGroupDialog } from './create-group-dialog';
 import { GroupDetails } from './group-details';
 import type { Group } from '@/lib/types';
-import { useAuth } from '@/lib/stores/auth-store';
+import { useAuth } from '@/lib/auth/auth-store';
 
 // Mock data for initial groups with catches
 const mockGroups: Group[] = [

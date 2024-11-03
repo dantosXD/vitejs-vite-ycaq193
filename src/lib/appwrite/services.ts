@@ -1,13 +1,11 @@
-import { Account, Databases, Storage, Functions, Avatars, ID, AppwriteException } from 'appwrite';
-import { getClient, resetClient } from './client';
-import { DATABASE_ID, COLLECTIONS, BUCKETS } from './config';
+import { Client, Account, Databases, Storage, Functions, Avatars, ID } from 'appwrite';
+import { ENDPOINTS } from './constants';
 
 class AppwriteServices {
   private static instance: AppwriteServices | null = null;
-  private initialized = false;
-  private initializationPromise: Promise<void> | null = null;
-  private initializationError: Error | null = null;
+  private initializationAttempted = false; // Track if initialization has been attempted
 
+  public readonly client: Client;
   public readonly account: Account;
   public readonly databases: Databases;
   public readonly storage: Storage;
@@ -15,98 +13,93 @@ class AppwriteServices {
   public readonly avatars: Avatars;
 
   private constructor() {
-    try {
-      const client = getClient();
-      this.account = new Account(client);
-      this.databases = new Databases(client);
-      this.storage = new Storage(client);
-      this.functions = new Functions(client);
-      this.avatars = new Avatars(client);
-    } catch (error) {
-      console.error('Failed to initialize Appwrite services:', error);
-      throw error;
-    }
+    // Initialize the client
+    this.client = new Client()
+      .setEndpoint(ENDPOINTS.API)
+      .setProject(ENDPOINTS.PROJECT);
+
+    // Initialize services
+    this.account = new Account(this.client);
+    this.databases = new Databases(this.client);
+    this.storage = new Storage(this.client);
+    this.functions = new Functions(this.client);
+    this.avatars = new Avatars(this.client);
   }
 
   public static getInstance(): AppwriteServices {
     if (!AppwriteServices.instance) {
-      try {
-        AppwriteServices.instance = new AppwriteServices();
-      } catch (error) {
-        console.error('Failed to create AppwriteServices instance:', error);
-        throw error;
-      }
+      AppwriteServices.instance = new AppwriteServices();
     }
     return AppwriteServices.instance;
   }
 
-  private async validateServices(): Promise<void> {
-    try {
-      // Basic connectivity check
-      await this.account.getSession('current').catch(error => {
-        if (error instanceof AppwriteException && error.code !== 401) {
-          throw error;
-        }
-      });
+  // Auth methods following Appwrite's documentation
+  public async createEmailSession(email: string, password: string) {
+    return this.account.createSession(email, password); // Corrected method name
+  }
 
-      this.initialized = true;
+  public async createAccount(email: string, password: string, name: string) {
+    return this.account.create(
+      ID.unique(),
+      email,
+      password,
+      name
+    );
+  }
+
+  public async getAccount() {
+    try {
+      return await this.account.get();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error occurred';
-      throw new Error(`Failed to validate Appwrite services: ${message}`);
+      console.error('Failed to get account:', error);
+      throw error;
     }
   }
 
-  public async initialize(): Promise<void> {
-    if (this.initialized) {
-      return;
-    }
+  public async deleteSession(sessionId: string) {
+    return this.account.deleteSession(sessionId);
+  }
 
-    if (this.initializationError) {
-      throw this.initializationError;
-    }
+  public async getSession(sessionId: string) {
+    return this.account.getSession(sessionId);
+  }
 
-    if (this.initializationPromise) {
-      return this.initializationPromise;
-    }
+  public async createVerification(url: string) {
+    return this.account.createVerification(url);
+  }
 
-    this.initializationPromise = (async () => {
-      try {
-        await this.validateServices();
-        console.log('Appwrite services initialized successfully');
-      } catch (error) {
-        this.initializationError = error instanceof Error 
-          ? error 
-          : new Error('Failed to initialize Appwrite services');
-        throw this.initializationError;
-      } finally {
-        this.initializationPromise = null;
-      }
-    })();
+  public async getPrefs() {
+    return this.account.getPrefs();
+  }
 
-    return this.initializationPromise;
+  public async updatePrefs(prefs: object) {
+    return this.account.updatePrefs(prefs);
+  }
+
+  public initialize(): Promise<void> { // Placeholder for future async initialization
+    this.initializationAttempted = true;
+    return Promise.resolve();
   }
 
   public isInitialized(): boolean {
-    return this.initialized;
+    return this.initializationAttempted;
   }
 
   public static reset(): void {
     AppwriteServices.instance = null;
-    resetClient();
   }
 }
 
 const services = AppwriteServices.getInstance();
 
+export const appwrite = services;
 export const account = services.account;
 export const databases = services.databases;
 export const storage = services.storage;
 export const functions = services.functions;
 export const avatars = services.avatars;
 
-export { ID, DATABASE_ID, COLLECTIONS, BUCKETS };
-
 export const initializeServices = () => services.initialize();
 export const isServicesInitialized = () => services.isInitialized();
-export const resetServices = () => AppwriteServices.reset();
 export const isInitialized = () => services.isInitialized();
+export const resetServices = () => AppwriteServices.reset();

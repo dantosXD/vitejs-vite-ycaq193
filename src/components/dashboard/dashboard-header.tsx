@@ -1,6 +1,6 @@
 import { Fish, LogOut, Menu, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/lib/stores/auth-store';
+import { useAuth } from '@/lib/auth/auth-store';
 import { usePreferences } from '@/lib/hooks/use-preferences';
 import {
   DropdownMenu,

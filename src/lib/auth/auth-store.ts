@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { toast } from 'sonner';
+import type { User, AuthError } from './types';
 import { AuthService } from './auth-service';
-import type { User, AuthError, UserPreferences } from './types';
 
 interface AuthState {
   user: User | null;
@@ -13,7 +13,7 @@ interface AuthState {
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
-  updatePreferences: (preferences: Partial<UserPreferences>) => Promise<void>;
+  updatePreferences: (preferences: Partial<User['preferences']>) => Promise<void>;
 }
 
 export const useAuth = create<AuthState>()(
@@ -31,7 +31,7 @@ export const useAuth = create<AuthState>()(
           set({ user, isLoading: false, error: null });
           toast.success('Welcome back!');
         } catch (error: any) {
-          set({ isLoading: false, user: null, error });
+          set({ isLoading: false, user: null, error: error });
           toast.error(error.message);
           throw error;
         }
@@ -44,7 +44,7 @@ export const useAuth = create<AuthState>()(
           set({ user, isLoading: false, error: null });
           toast.success('Account created successfully!');
         } catch (error: any) {
-          set({ isLoading: false, user: null, error });
+          set({ isLoading: false, user: null, error: error });
           toast.error(error.message);
           throw error;
         }
@@ -57,7 +57,7 @@ export const useAuth = create<AuthState>()(
           set({ user: null, isLoading: false, error: null });
           toast.success('Logged out successfully');
         } catch (error: any) {
-          set({ isLoading: false, error });
+          set({ isLoading: false, error: error });
           toast.error(error.message);
           throw error;
         }
@@ -66,28 +66,58 @@ export const useAuth = create<AuthState>()(
       checkAuth: async () => {
         try {
           set({ isLoading: true, error: null });
+          if (!navigator.onLine) {
+            const persistedUser = get().user;
+            set({
+              user: persistedUser,
+              isLoading: false,
+              isOnline: false,
+              error: null,
+            });
+            return;
+          }
+
           const user = await AuthService.getCurrentUser();
-          set({ user, isLoading: false, error: null });
+          set({
+            user,
+            isLoading: false,
+            error: null,
+          });
         } catch (error: any) {
-          set({ isLoading: false, error });
+          set({
+            user: null,
+            isLoading: false,
+            error: error,
+          });
         }
       },
 
-      updatePreferences: async (preferences: Partial<UserPreferences>) => {
+      updatePreferences: async (preferences) => {
         try {
           set({ isLoading: true, error: null });
-          const updatedPrefs = await AuthService.updatePreferences(preferences);
-          const user = get().user;
-          if (user) {
-            set({
-              user: { ...user, preferences: updatedPrefs },
-              isLoading: false,
-              error: null,
-            });
+          const currentUser = get().user;
+          if (!currentUser) {
+            throw new Error('No user logged in');
           }
+
+          await AuthService.updatePreferences(preferences);
+          
+          const user = {
+            ...currentUser,
+            preferences: {
+              ...currentUser.preferences,
+              ...preferences,
+            },
+          };
+
+          set({
+            user,
+            isLoading: false,
+            error: null,
+          });
           toast.success('Preferences updated successfully');
         } catch (error: any) {
-          set({ isLoading: false, error });
+          set({ isLoading: false, error: error });
           toast.error(error.message);
           throw error;
         }
@@ -105,7 +135,6 @@ if (typeof window !== 'undefined') {
   window.addEventListener('online', () => {
     useAuth.getState().checkAuth();
   });
-
   window.addEventListener('offline', () => {
     useAuth.setState({ isOnline: false });
   });

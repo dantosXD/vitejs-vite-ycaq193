@@ -15,12 +15,17 @@ export interface UserPreferences {
   displaySettings: {
     defaultCatchView: 'grid' | 'table' | 'timeline';
     measurementSystem: 'imperial' | 'metric';
-    dateFormat: 'MM/dd/yyyy' | 'dd/MM/yyyy' | 'yyyy-MM-dd';
+    dateFormat: 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD';
   };
 }
 
 export interface User {
   $id: string;
+  $createdAt: string;
+  $updatedAt: string;
+  $permissions: string[];
+  $collectionId: string;
+  $databaseId: string;
   name: string;
   email: string;
   avatar?: string;
